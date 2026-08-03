@@ -2,8 +2,8 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
-  Logger,
 } from '@nestjs/common';
+
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '../../database/prisma.service';
@@ -13,8 +13,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -33,7 +31,7 @@ export class UsersService {
       12,
     );
 
-    const user = await this.prisma.user.create({
+    return this.prisma.user.create({
       data: {
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
@@ -42,10 +40,6 @@ export class UsersService {
         passwordHash,
       },
     });
-
-    this.logger.log(`User created: ${user.email}`);
-
-    return user;
   }
 
   async findAll() {
@@ -71,47 +65,22 @@ export class UsersService {
     return user;
   }
 
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-  ) {
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+  }
+
+  async update(id: string, dto: UpdateUserDto) {
     await this.findOne(id);
 
-    if (updateUserDto.email) {
-      const existing = await this.prisma.user.findFirst({
-        where: {
-          email: updateUserDto.email,
-          NOT: {
-            id,
-          },
-        },
-      });
-
-      if (existing) {
-        throw new ConflictException(
-          'Email already exists.',
-        );
-      }
-    }
-
-    let passwordHash: string | undefined;
-
-    if (updateUserDto.password) {
-      passwordHash = await bcrypt.hash(
-        updateUserDto.password,
-        12,
-      );
-    }
-
     return this.prisma.user.update({
-      where: { id },
-      data: {
-        firstName: updateUserDto.firstName,
-        lastName: updateUserDto.lastName,
-        email: updateUserDto.email,
-        phone: updateUserDto.phone,
-        ...(passwordHash && { passwordHash }),
+      where: {
+        id,
       },
+      data: dto,
     });
   }
 
@@ -119,7 +88,9 @@ export class UsersService {
     await this.findOne(id);
 
     return this.prisma.user.update({
-      where: { id },
+      where: {
+        id,
+      },
       data: {
         deletedAt: new Date(),
       },
