@@ -19,6 +19,20 @@ enum RoleType {
   ORGANIZATION
 }
 
+enum EndpointStatus {
+  ONLINE
+  OFFLINE
+  ISOLATED
+  QUARANTINED
+  RETIRED
+}
+
+enum OperatingSystem {
+  WINDOWS
+  LINUX
+  MACOS
+}
+
 model Organization {
   id               String             @id @default(uuid())
   name             String
@@ -33,7 +47,8 @@ model Organization {
   subscriptionPlan String             @default("FREE")
   status           OrganizationStatus @default(TRIAL)
 
-  members OrganizationMember[]
+  members   OrganizationMember[]
+  endpoints Endpoint[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -89,7 +104,7 @@ model Role {
 model Permission {
   id String @id @default(uuid())
 
-  name        String  @unique
+  name        String @unique
   description String?
 
   rolePermissions RolePermission[]
@@ -131,7 +146,7 @@ model OrganizationMember {
   isOwner Boolean @default(false)
 
   invitedAt DateTime?
-  joinedAt  DateTime?
+  joinedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -139,4 +154,45 @@ model OrganizationMember {
   @@unique([organizationId, userId])
   @@index([organizationId])
   @@index([userId])
+}
+
+model Endpoint {
+  id String @id @default(uuid())
+
+  hostname String
+
+  deviceName String?
+
+  operatingSystem OperatingSystem
+
+  osVersion String?
+
+  agentVersion String?
+
+  serialNumber String? @unique
+
+  ipAddress String?
+
+  macAddress String? @unique
+
+  username String?
+
+  status EndpointStatus @default(OFFLINE)
+
+  lastSeenAt DateTime?
+
+  registeredAt DateTime @default(now())
+
+  organizationId String?
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([hostname])
+  @@index([status])
+  @@index([lastSeenAt])
+  @@index([organizationId])
 }
