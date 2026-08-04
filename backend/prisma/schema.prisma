@@ -25,7 +25,7 @@ model Organization {
   slug             String             @unique
   description      String?
   website          String?
-  email            String?
+  email            String?            @unique
   phone            String?
   country          String?
   timezone         String             @default("UTC")
@@ -51,6 +51,8 @@ model User {
   email        String @unique
   passwordHash String
 
+  role String @default("USER")
+
   phone     String?
   avatarUrl String?
 
@@ -75,7 +77,8 @@ model Role {
   description String?
   type        RoleType @default(ORGANIZATION)
 
-  memberships OrganizationMember[]
+  memberships     OrganizationMember[]
+  rolePermissions RolePermission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,8 +92,27 @@ model Permission {
   name        String  @unique
   description String?
 
+  rolePermissions RolePermission[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RolePermission {
+  id String @id @default(uuid())
+
+  roleId       String
+  permissionId String
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
 }
 
 model OrganizationMember {
@@ -101,8 +123,10 @@ model OrganizationMember {
   roleId         String
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role         Role         @relation(fields: [roleId], references: [id])
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role Role @relation(fields: [roleId], references: [id])
 
   isOwner Boolean @default(false)
 

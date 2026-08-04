@@ -3,9 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 
 import { PrismaModule } from './database/prisma.module';
 
-import { OrganizationsModule } from './modules/organizations/organizations.module';
-import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
 
 @Module({
   imports: [
@@ -15,11 +16,17 @@ import { AuthModule } from './modules/auth/auth.module';
 
     PrismaModule,
 
-    OrganizationsModule,
+    AuthModule,
 
     UsersModule,
 
-    AuthModule,
+    OrganizationsModule,
+
+    PermissionsModule,
   ],
+
+  controllers: [],
+
+  providers: [],
 })
 export class AppModule {}

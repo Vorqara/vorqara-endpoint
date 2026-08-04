@@ -13,23 +13,29 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: {
-        email: createUserDto.email,
-      },
-    });
+    const existingUser =
+      await this.prisma.user.findUnique({
+        where: {
+          email: createUserDto.email,
+        },
+      });
 
     if (existingUser) {
-      throw new ConflictException('Email already exists.');
+      throw new ConflictException(
+        'Email already exists.',
+      );
     }
 
-    const passwordHash = await bcrypt.hash(
-      createUserDto.password,
-      12,
-    );
+    const passwordHash =
+      await bcrypt.hash(
+        createUserDto.password,
+        12,
+      );
 
     return this.prisma.user.create({
       data: {
@@ -54,15 +60,28 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-    });
+    const user =
+      await this.prisma.user.findUnique({
+        where: {
+          id,
+        },
+      });
 
     if (!user || user.deletedAt) {
-      throw new NotFoundException('User not found.');
+      throw new NotFoundException(
+        'User not found.',
+      );
     }
 
     return user;
+  }
+
+  async findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
   }
 
   async findByEmail(email: string) {
@@ -73,7 +92,10 @@ export class UsersService {
     });
   }
 
-  async update(id: string, dto: UpdateUserDto) {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+  ) {
     await this.findOne(id);
 
     return this.prisma.user.update({
@@ -95,5 +117,73 @@ export class UsersService {
         deletedAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Loads every permission belonging to
+   * the user's current role.
+   *
+   * Beta Architecture:
+   *
+   * User.role
+   *      ↓
+   * Role
+   *      ↓
+   * RolePermission
+   *      ↓
+   * Permission
+   */
+  async getUserPermissions(
+    userId: string,
+  ): Promise<string[]> {
+    const user =
+      await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+    if (!user) {
+      return [];
+    }
+
+    // SUPER_ADMIN bypass
+    if (user.role === 'SUPER_ADMIN') {
+      const permissions =
+        await this.prisma.permission.findMany({
+          orderBy: {
+            name: 'asc',
+          },
+        });
+
+      return permissions.map(
+        (permission) => permission.name,
+      );
+    }
+
+    const role =
+      await this.prisma.role.findFirst({
+        where: {
+          name: user.role,
+        },
+      });
+
+    if (!role) {
+      return [];
+    }
+
+    const rolePermissions =
+      await this.prisma.rolePermission.findMany({
+        where: {
+          roleId: role.id,
+        },
+        include: {
+          permission: true,
+        },
+      });
+
+    return rolePermissions.map(
+      (rp) => rp.permission.name,
+    );
   }
 }
