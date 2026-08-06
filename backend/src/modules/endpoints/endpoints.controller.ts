@@ -19,6 +19,8 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 
+import { AgentJwtGuard } from '../../common/guards/agent-jwt.guard';
+
 import { EndpointsService } from './endpoints.service';
 
 import { CreateEndpointDto } from './dto/create-endpoint.dto';
@@ -27,17 +29,22 @@ import { HeartbeatDto } from './dto/heartbeat.dto';
 
 @ApiTags('Endpoints')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('endpoints')
 export class EndpointsController {
   constructor(
     private readonly endpointsService: EndpointsService,
   ) {}
 
+  /*
+   |--------------------------------------------------------------------------
+   | Agent APIs
+   |--------------------------------------------------------------------------
+   */
+
   @Post()
-  @Permissions('devices:create')
+  @UseGuards(AgentJwtGuard)
   @ApiOperation({
-    summary: 'Register endpoint',
+    summary: 'Register endpoint (Agent)',
   })
   register(
     @Body()
@@ -46,7 +53,28 @@ export class EndpointsController {
     return this.endpointsService.register(dto);
   }
 
+  @Post(':id/heartbeat')
+  @UseGuards(AgentJwtGuard)
+  @ApiOperation({
+    summary: 'Endpoint heartbeat (Agent)',
+  })
+  heartbeat(
+    @Param('id')
+    id: string,
+    @Body()
+    dto: HeartbeatDto,
+  ) {
+    return this.endpointsService.heartbeat(id, dto);
+  }
+
+  /*
+   |--------------------------------------------------------------------------
+   | Dashboard APIs
+   |--------------------------------------------------------------------------
+   */
+
   @Get()
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('devices:read')
   @ApiOperation({
     summary: 'Get all endpoints',
@@ -56,6 +84,7 @@ export class EndpointsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('devices:read')
   @ApiOperation({
     summary: 'Get endpoint by ID',
@@ -68,6 +97,7 @@ export class EndpointsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('devices:update')
   @ApiOperation({
     summary: 'Update endpoint',
@@ -82,6 +112,7 @@ export class EndpointsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('devices:delete')
   @ApiOperation({
     summary: 'Delete endpoint',
@@ -93,21 +124,8 @@ export class EndpointsController {
     return this.endpointsService.remove(id);
   }
 
-  @Post(':id/heartbeat')
-  @Permissions('devices:update')
-  @ApiOperation({
-    summary: 'Endpoint heartbeat',
-  })
-  heartbeat(
-    @Param('id')
-    id: string,
-    @Body()
-    dto: HeartbeatDto,
-  ) {
-    return this.endpointsService.heartbeat(id, dto);
-  }
-
   @Post(':id/isolate')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('endpoint:isolate')
   @ApiOperation({
     summary: 'Isolate endpoint',
@@ -120,6 +138,7 @@ export class EndpointsController {
   }
 
   @Post(':id/restore')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('endpoint:restore')
   @ApiOperation({
     summary: 'Restore endpoint',

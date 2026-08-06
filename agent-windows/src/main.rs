@@ -1,4 +1,5 @@
 mod api;
+mod commands;
 mod config;
 mod device;
 mod logger;
@@ -7,10 +8,17 @@ mod services;
 mod storage;
 mod windows;
 
-use api::register::collect_endpoint;
+use anyhow::Result;
 
-fn main() {
-    let endpoint = collect_endpoint();
+use services::runtime::start_agent;
 
-    println!("{:#?}", endpoint);
+#[tokio::main]
+async fn main() -> Result<()> {
+    dotenvy::dotenv().ok();
+
+    env_logger::init();
+
+    start_agent().await?;
+
+    Ok(())
 }

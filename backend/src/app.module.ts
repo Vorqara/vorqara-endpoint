@@ -8,6 +8,9 @@ import { UsersModule } from './modules/users/users.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { EndpointsModule } from './modules/endpoints/endpoints.module';
+import { AgentAuthModule } from './modules/agent-auth/agent-auth.module';
+import { EndpointCommandsModule } from './modules/endpoint-commands/endpoint-commands.module';
+import { HealthIntelligenceModule } from './modules/health-intelligence/health-intelligence.module';
 
 @Module({
   imports: [
@@ -26,6 +29,12 @@ import { EndpointsModule } from './modules/endpoints/endpoints.module';
     PermissionsModule,
 
     EndpointsModule,
+
+    AgentAuthModule,
+
+    EndpointCommandsModule,
+
+    HealthIntelligenceModule,
   ],
 
   controllers: [],

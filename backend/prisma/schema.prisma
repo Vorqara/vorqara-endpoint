@@ -33,6 +33,13 @@ enum OperatingSystem {
   MACOS
 }
 
+enum CommandStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 model Organization {
   id               String             @id @default(uuid())
   name             String
@@ -104,7 +111,7 @@ model Role {
 model Permission {
   id String @id @default(uuid())
 
-  name        String @unique
+  name        String  @unique
   description String?
 
   rolePermissions RolePermission[]
@@ -119,8 +126,7 @@ model RolePermission {
   roleId       String
   permissionId String
 
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
@@ -138,15 +144,13 @@ model OrganizationMember {
   roleId         String
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  role Role @relation(fields: [roleId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [roleId], references: [id])
 
   isOwner Boolean @default(false)
 
   invitedAt DateTime?
-  joinedAt DateTime?
+  joinedAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -187,6 +191,10 @@ model Endpoint {
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
+  commands EndpointCommand[]
+
+  health EndpointHealth?
+
   createdAt DateTime @default(now())
 
   updatedAt DateTime @updatedAt
@@ -195,4 +203,81 @@ model Endpoint {
   @@index([status])
   @@index([lastSeenAt])
   @@index([organizationId])
+}
+
+model EndpointCommand {
+  id String @id @default(uuid())
+
+  endpointId String
+
+  endpoint Endpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  command String
+
+  payload Json?
+
+  status CommandStatus @default(PENDING)
+
+  output Json?
+
+  error String?
+
+  exitCode Int?
+
+  createdBy String?
+
+  createdAt DateTime @default(now())
+
+  executedAt DateTime?
+
+  @@index([endpointId])
+  @@index([status])
+}
+
+model EndpointHealth {
+  id String @id @default(uuid())
+
+  endpointId String @unique
+
+  endpoint Endpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  cpuUsage Float @default(0)
+
+  memoryUsage Float @default(0)
+
+  diskUsage Float @default(0)
+
+  uptimeSeconds BigInt @default(0)
+
+  defenderEnabled Boolean @default(false)
+
+  firewallEnabled Boolean @default(false)
+
+  bitLockerEnabled Boolean @default(false)
+
+  secureBootEnabled Boolean @default(false)
+
+  tpmEnabled Boolean @default(false)
+
+  agentRunning Boolean @default(true)
+
+  networkConnected Boolean @default(true)
+
+  pendingRestart Boolean @default(false)
+
+  healthScore Int @default(100)
+
+  securityScore Int @default(100)
+
+  riskScore Int @default(0)
+
+  lastCollected DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([healthScore])
+  @@index([securityScore])
+  @@index([riskScore])
 }

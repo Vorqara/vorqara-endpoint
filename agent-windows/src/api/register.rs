@@ -1,22 +1,26 @@
-use crate::device::{
-    hardware,
-    network,
-    os,
-};
+use anyhow::Result;
+use serde_json::Value;
 
+use crate::api::client::ApiClient;
 use crate::models::endpoint::EndpointRegistration;
 
-pub fn collect_endpoint() -> EndpointRegistration {
-    EndpointRegistration {
-        hostname: os::hostname(),
-        device_name: Some(os::hostname()),
-        operating_system: os::os_name(),
-        os_version: os::os_version(),
-        agent_version: Some("0.1.0".to_string()),
-        serial_number: hardware::serial_number(),
-        ip_address: network::ip_address(),
-        mac_address: network::mac_address(),
-        username: os::username(),
-        status: "ONLINE".to_string(),
-    }
+pub async fn register_endpoint(
+    api: &ApiClient,
+    token: &str,
+    endpoint: &EndpointRegistration,
+) -> Result<String> {
+    let response = api
+        .post_authorized::<_, Value>(
+            "/endpoints",
+            token,
+            endpoint,
+        )
+        .await?;
+
+    let endpoint_id = response["id"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+
+    Ok(endpoint_id)
 }
