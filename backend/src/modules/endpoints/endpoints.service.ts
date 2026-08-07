@@ -133,4 +133,57 @@ export class EndpointsService {
       },
     });
   }
+
+  // ----------------------------------------
+  // Dashboard Summary
+  // ----------------------------------------
+
+  async dashboardSummary() {
+    const totalEndpoints =
+      await this.prisma.endpoint.count();
+
+    const onlineEndpoints =
+      await this.prisma.endpoint.count({
+        where: {
+          status: EndpointStatus.ONLINE,
+        },
+      });
+
+    const offlineEndpoints =
+      await this.prisma.endpoint.count({
+        where: {
+          status: EndpointStatus.OFFLINE,
+        },
+      });
+
+    const isolatedEndpoints =
+      await this.prisma.endpoint.count({
+        where: {
+          status: EndpointStatus.ISOLATED,
+        },
+      });
+
+    const quarantinedEndpoints =
+      await this.prisma.endpoint.count({
+        where: {
+          status: EndpointStatus.QUARANTINED,
+        },
+      });
+
+    const retiredEndpoints =
+      await this.prisma.endpoint.count({
+        where: {
+          status: EndpointStatus.RETIRED,
+        },
+      });
+
+    return {
+      totalEndpoints,
+      onlineEndpoints,
+      offlineEndpoints,
+      isolatedEndpoints,
+      quarantinedEndpoints,
+      retiredEndpoints,
+    };
+  }
 }

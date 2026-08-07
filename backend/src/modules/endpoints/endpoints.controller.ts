@@ -73,6 +73,16 @@ export class EndpointsController {
    |--------------------------------------------------------------------------
    */
 
+  @Get('dashboard/summary')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('devices:read')
+  @ApiOperation({
+    summary: 'Dashboard Summary',
+  })
+  dashboardSummary() {
+    return this.endpointsService.dashboardSummary();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('devices:read')

@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { AgentAuthController } from './agent-auth.controller';
 import { AgentAuthService } from './agent-auth.service';
+import { AgentJwtStrategy } from './strategies/agent-jwt.strategy';
 
 @Module({
   imports: [
@@ -13,8 +14,18 @@ import { AgentAuthService } from './agent-auth.service';
       },
     }),
   ],
-  controllers: [AgentAuthController],
-  providers: [AgentAuthService],
-  exports: [AgentAuthService],
+
+  controllers: [
+    AgentAuthController,
+  ],
+
+  providers: [
+    AgentAuthService,
+    AgentJwtStrategy,
+  ],
+
+  exports: [
+    AgentAuthService,
+  ],
 })
 export class AgentAuthModule {}
